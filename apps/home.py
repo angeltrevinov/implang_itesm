@@ -13,10 +13,10 @@ layout = html.Div([
 
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/home.jpg', style={'max-width':'100%', 'height':'auto'}),
+            html.Img(src='../assets/home.jpg', style={'maxWidth':'100%', 'height':'auto'}),
              html.H2('Una ciudad más inclusiva se está construyendo',
                 style={'position': 'absolute', 'top': '50%', 'left': '50%',
-                'transform': 'translate(-50%, -50%)','color': 'white','text-align':'center'})
+                'transform': 'translate(-50%, -50%)','color': 'white','textAlign':'center'})
         ])
     ),
 
@@ -24,7 +24,7 @@ layout = html.Div([
     
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/home_2.gif', style={'max-width':'100%', 'height':'auto'})
+            html.Img(src='../assets/home_2.gif', style={'maxWidth':'100%', 'height':'auto'})
         ])
     ),
 
@@ -52,22 +52,22 @@ layout = html.Div([
         dbc.Row(
             dbc.Col([
                 html.A(
-                    html.Img(src='../assets/instagram.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/instagram.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.instagram.com/implang_spgg/', target='blank'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/facebook.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/facebook.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.facebook.com/implangspgg', target='blank', className='pl-3'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/twitter.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/twitter.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://twitter.com/implang_spgg', target='blank', className='pl-3'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/youtube.png',style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/youtube.png',style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.youtube.com/channel/UCZwYFPh0dHnKhXqzaxlaqNg', target='blank',
                     className='pl-3'
                 )
@@ -90,7 +90,7 @@ layout = html.Div([
             ), className='px-1 py-3'
         )
         
-    ], style={'background-color': 'black','color': 'white'}
+    ], style={'backgroundColor': 'black','color': 'white'}
     )
 
 

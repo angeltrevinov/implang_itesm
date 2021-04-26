@@ -4,19 +4,61 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
+##### MIEMBROS
+# - Julia Jimenez A00821428
+# - Angel Treviño A01336559
+# - Mildred Gil A00820397
+#- Mauricio Lozano A01194301
+
+
+
 layout = html.Div([
 
     ####################################### COMIENZA ESPACIO DE EDICIÓN #######################################
 
+    ## NAVBAR RADIOGRAFIA
+    dbc.NavbarSimple(
+        expand=True,
+        brand="Proyectos",
+        dark=True,
+        color="black",
+        sticky="top",
+        children=[
+            dbc.DropdownMenu(
+                label="Radiografía Urbana",
+                nav=True,
+                in_navbar=True,
+                children=[
+                    dbc.DropdownMenuItem("Qué es?", href="#QueEs"),
+                    dbc.DropdownMenuItem("Descripción"),
+                    dbc.DropdownMenuItem("Como estamos?"),
+                    dbc.DropdownMenuItem("Mapa"),
+                    dbc.DropdownMenuItem("Datos")
+                ]
+            )
+        ]),
+
+
+    ## QUE ES? SECTION
+    dbc.Row(
+        children=[
+            dbc.Col(children=[html.H1("Radiografía Urbana")]),
+            dbc.Col(children=[
+                dbc.Row(id="QueEs", children=html.H3("Que es?")),
+                dbc.Row("Lorem ipsum")
+            ])
+        ]
+    ),
+
+
     ## BANNER PRINCIPAL
-    
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/imagen.png', style={'max-width':'100%', 'height':'auto'}),
+            html.Img(src='../assets/imagen.png', style={'maxWidth':'100%', 'height':'auto'}),
             html.H2('Ejemplo título banner',
                 style={'position': 'absolute', 'top': '50%', 'left': '50%',
                 'transform': 'translate(-50%, -50%)'})
-        ], style={'color': 'white', 'position': 'relative', 'text-align': 'center'})
+        ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
     ),
 
     ## SECCIÓN 1
@@ -45,7 +87,7 @@ layout = html.Div([
         dbc.Row(
             dbc.Col(
                 html.H2('Otro ejemplo de título')
-                ),className='py-3', style={'background-color': 'black','color': 'white'}
+                ),className='py-3', style={'backgroundColor': 'black','color': 'white'}
             ),
 
         ## Texto
@@ -74,22 +116,22 @@ layout = html.Div([
         dbc.Row(
             dbc.Col([
                 html.A(
-                    html.Img(src='../assets/instagram.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/instagram.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.instagram.com/implang_spgg/', target='blank'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/facebook.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/facebook.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.facebook.com/implangspgg', target='blank', className='pl-3'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/twitter.png', style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/twitter.png', style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://twitter.com/implang_spgg', target='blank', className='pl-3'
                 ),
 
                 html.A(
-                    html.Img(src='../assets/youtube.png',style={'max-width':'85px', 'height':'34px'}),
+                    html.Img(src='../assets/youtube.png',style={'maxWidth':'85px', 'height':'34px'}),
                     href='https://www.youtube.com/channel/UCZwYFPh0dHnKhXqzaxlaqNg', target='blank',
                     className='pl-3'
                 )
@@ -112,6 +154,6 @@ layout = html.Div([
             ), className='px-1 py-3'
         )
         
-    ], style={'background-color': 'black','color': 'white'}
+    ], style={'backgroundColor': 'black','color': 'white'}
     )
 ])
