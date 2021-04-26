@@ -3,6 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import plotly.express as px
+import plotly.graph_objects as go
+
 
 ##### MIEMBROS
 # - Julia Jimenez A00821428
@@ -11,7 +13,19 @@ import plotly.express as px
 #- Mauricio Lozano A01194301
 
 
+###################### LOGIC ###############################
+fig = go.Figure(data=[go.Scatter(
+    x=[1, 2, 3, 4], y=[10, 11, 12, 13],
+    text=['A<br>size: 40', 'B<br>size: 60', 'C<br>size: 80', 'D<br>size: 100'],
+    mode='markers',
+    marker=dict(
+        color=['rgb(140, 22, 22)', 'rgb(31, 103, 166)', 'rgb(191,149,23)', 'rgb(156, 166, 83)'],
+        size=[40, 60, 80, 100],
+    )
+)])
 
+
+############################# LAYOUT #######################
 layout = html.Div([
 
     ####################################### COMIENZA ESPACIO DE EDICIÓN #######################################
@@ -30,8 +44,8 @@ layout = html.Div([
                 in_navbar=True,
                 children=[
                     dbc.DropdownMenuItem("Qué es?", href="#QueEs"),
-                    dbc.DropdownMenuItem("Descripción"),
-                    dbc.DropdownMenuItem("Como estamos?"),
+                    dbc.DropdownMenuItem("Descripción", href="#Description"),
+                    dbc.DropdownMenuItem("Como estamos?", href="#ComoEstamos"),
                     dbc.DropdownMenuItem("Mapa"),
                     dbc.DropdownMenuItem("Datos")
                 ]
@@ -42,11 +56,11 @@ layout = html.Div([
     ## QUE ES? SECTION
     dbc.Row(
         children=[
-            dbc.Col(children=[html.H1("Radiografía Urbana")]),
+            dbc.Col(children=[html.H1("Radiografía Urbana")], xs=12, sm=5),
             dbc.Col(children=[
-                dbc.Row(id="QueEs", children=html.H3("Que es?")),
-                dbc.Row("Lorem ipsum")
-            ])
+                dbc.Row(id="QueEs", children=dbc.Col(html.H3("Que es?"))),
+                dbc.Row(children=[dbc.Col("Lorem ipsum")])
+            ], xs=12, sm=7)
         ]
     ),
 
@@ -54,11 +68,40 @@ layout = html.Div([
     ## BANNER PRINCIPAL
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/imagen.png', style={'maxWidth':'100%', 'height':'auto'}),
-            html.H2('Ejemplo título banner',
-                style={'position': 'absolute', 'top': '50%', 'left': '50%',
-                'transform': 'translate(-50%, -50%)'})
+            html.Img(src='../assets/artwall.jpg', style={'maxWidth':'100%', 'height':'auto'})
         ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
+    ),
+
+    ## DESCRIPTION SECTION
+    dbc.Row(
+        id="Description",
+        children=dbc.Col(children=[html.H2("Descripción:")])
+    ),
+
+    dbc.Row(
+        children=dbc.Col(children="Lorem ipsum")
+    ),
+
+    ## BANNER PRINCIPAL
+    dbc.Row(
+        dbc.Col([
+            html.Img(src='../assets/artwall.jpg', style={'maxWidth': '100%', 'height': 'auto'})
+        ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
+    ),
+
+    ## COMO ESTAMOS SECTION
+    dbc.Row(
+        id="ComoEstamos",
+        children=dbc.Col(children=[html.H2("Como Estamos?")])
+    ),
+
+    ## Graph example
+    dbc.Row(
+        dbc.Col(
+            dcc.Graph(
+                figure=fig
+            )
+        )
     ),
 
     ## SECCIÓN 1
