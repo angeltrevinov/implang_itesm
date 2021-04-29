@@ -20,9 +20,8 @@ import json
 load_dotenv()
 mapbox_token = os.getenv("MAPBOX_TOKEN")
 
-
 ###################### LOGIC ###############################
-#### Mapa areas verdes cerca de un servicio en particular
+#### Mapa servicios por area verde
 # loading geojsons
 sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
 sector_k1_av = json.load(open("src_files/av_k1.geojson"))
@@ -41,42 +40,51 @@ df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
 df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
-df_denue_av_data_6366212 = df_denue_av_data[df_denue_av_data['denue_id'] == 6366212.0]
+df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
 
-map6366212 = px.choropleth_mapbox(
-    df_denue_av_data_6366212,
-    geojson=sector_k1_av,
-    locations="av_union",
-    featureidkey="properties.UNION",
-    color="av_union",
-    hover_data=df_denue_av_data_6366212,
-    color_continuous_scale=["#6C7339","#E4F279","#B0B591","#9CA653","#EDF2C2"]
+fig_park_5 = px.scatter_mapbox(
+    df_denue_av_data_5,
+    lat="latitud",
+    lon="longitud",
+    color="codigo_act",
+    size="distancia",
+    color_continuous_scale=px.colors.cyclical.IceFire,
+    size_max=15,
+    zoom=10
 )
 
-map6366212.add_trace(go.Scattermapbox(
-    mode="markers",
-    lon=[df_denue_av_data_6366212['longitud'][0]], lat=[df_denue_av_data_6366212['latitud'][0]],
-    marker={'size': 10, 'color': ["red"]}
-))
+fig_park_5.add_trace(
+    go.Choroplethmapbox(
+        geojson=sector_k1_av,
+        locations=[5],
+        featureidkey="properties.UNION"
+    )
+)
 
-map6366212.update_layout(
-    mapbox= {
+fig_park_5.update_layout(
+    mapbox = {
         'accesstoken': mapbox_token,
-        'style': "mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr",
-        'center': { 'lon': -100.4068401068442, 'lat': 25.683275441075},
+        'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
+        'center': {'lon': -100.4068401068442, 'lat': 25.683275441075},
         'zoom': 12,
-        'layers':
-            [
-                {
-                    'source': {
-                        'type': "FeatureCollection",
-                        'features': sector_k1_polygon["features"]
-                    },
-                    'type': 'fill', 'below': "traces", 'color': "white", "opacity": 0.2
-                }
-            ]
+        'layers': [
+            {
+                'source': {
+                    'type': 'FeatureCollection',
+                    'features': [sector_k1_av['features'][0]]
+                },
+                'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
+            },
+            {
+                'source': {
+                    'type': "FeatureCollection",
+                    'features': sector_k1_polygon['features']
+                },
+                'type': "fill", 'below': "traces", 'color': "white", "opacity": 0.2
+            }
+        ]
     },
-    margin={'l':0, 'r':0, 'b':0, 't':0}
+    margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
 )
 
 
@@ -111,7 +119,7 @@ layout = html.Div([
                 nav=True,
                 in_navbar=True,
                 children=[
-                    dbc.DropdownMenuItem("Qué es?", href="#QueEs"),
+                    dbc.DropdownMenuItem("¿Qué es?", href="#QueEs"),
                     dbc.DropdownMenuItem("Descripción", href="#Description"),
                     dbc.DropdownMenuItem("Como estamos?", href="#ComoEstamos"),
                     dbc.DropdownMenuItem("Mapa"),
@@ -160,14 +168,22 @@ layout = html.Div([
     ## COMO ESTAMOS SECTION
     dbc.Row(
         id="ComoEstamos",
-        children=dbc.Col(children=[html.H2("Como Estamos?")])
+        children=dbc.Col(children=[html.H2("¿Cómo estamos?")])
+    ),
+
+    dbc.Row(
+        dbc.Col(
+            dcc.Graph(
+                figure=fig
+            )
+        )
     ),
 
     ## Graph example
     dbc.Row(
         dbc.Col(
             dcc.Graph(
-                figure=map6366212
+                figure=fig_park_5
             )
         )
     ),
