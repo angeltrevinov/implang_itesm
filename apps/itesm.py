@@ -44,6 +44,7 @@ df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
 
 fig_park_5 = px.scatter_mapbox(
     df_denue_av_data_5,
+    title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
     lat="latitud",
     lon="longitud",
     color="codigo_act",
@@ -87,18 +88,15 @@ fig_park_5.update_layout(
     margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
 )
 
-
-
-# TODO: replace with real one
-fig = go.Figure(data=[go.Scatter(
-    x=[1, 2, 3, 4], y=[10, 11, 12, 13],
-    text=['A<br>size: 40', 'B<br>size: 60', 'C<br>size: 80', 'D<br>size: 100'],
-    mode='markers',
-    marker=dict(
-        color=['rgb(140, 22, 22)', 'rgb(31, 103, 166)', 'rgb(191,149,23)', 'rgb(156, 166, 83)'],
-        size=[40, 60, 80, 100],
-    )
-)])
+#### Bubble de numero de servicios por parque
+num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
+fig = px.scatter(
+    num_services_park,
+    x="Cantidad de Servicios",
+    size="SHAPE_AREA",
+    color="NOMBRE",
+    title="Cantidad de Servicios Por Area Verde"
+)
 
 
 ############################# LAYOUT #######################
@@ -135,7 +133,11 @@ layout = html.Div([
             dbc.Col(children=[html.H1("Radiografía Urbana")], xs=12, sm=5),
             dbc.Col(children=[
                 dbc.Row(id="QueEs", children=dbc.Col(html.H3("Que es?"))),
-                dbc.Row(children=[dbc.Col("Lorem ipsum")])
+                dbc.Row(children=[dbc.Col(
+                    "Es un apoyo que permite visualizar los espacios públicos " +
+                    "usables del municipio de San Pedro Garza Garcia y también mostrar el nivel de " +
+                    "accessibilidad que tienen cada uno de estos espacios."
+                )])
             ], xs=12, sm=7)
         ]
     ),
@@ -155,13 +157,17 @@ layout = html.Div([
     ),
 
     dbc.Row(
-        children=dbc.Col(children="Lorem ipsum")
+        children=dbc.Col(
+            "A traves de diferentes datos del INEGI y del DENUE, " +
+            "se pudieron visualizar las diferentes actividades economicas " +
+            "cerca de cada area y tambien medir el nivel de accessibilidad por parque."
+        )
     ),
 
     ## BANNER PRINCIPAL
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/artwall.jpg', style={'maxWidth': '100%', 'height': 'auto'})
+            html.Img(src='../assets/exposime-sanpedrogarza.png', style={'maxWidth': '100%', 'height': 'auto'})
         ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
     ),
 
@@ -187,47 +193,6 @@ layout = html.Div([
             )
         )
     ),
-
-    ## SECCIÓN 1
-    dbc.Container([
-        
-        ## Títutlo
-        dbc.Row(
-            dbc.Col(
-                html.H2('Ejemplo de título')
-            ), className='px-1 pt-4'
-        ),
-
-        ## Texto
-        dbc.Row(
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.')  
-            ), className='px-1 py-4'
-        )
-
-    ]),
-
-
-    ## SECCION 2
-    dbc.Container([
-        # Título
-        dbc.Row(
-            dbc.Col(
-                html.H2('Otro ejemplo de título')
-                ),className='py-3', style={'backgroundColor': 'black','color': 'white'}
-            ),
-
-        ## Texto
-        dbc.Row([
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.'), lg=3, md=9, sm=4
-            ),
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.'), lg=9, md=3, sm=8
-            ), 
-        ],className='py-3')
-
-    ]),
 
     ######################################## TERMINA ESPACIO DE EDICIÓN ########################################
 
