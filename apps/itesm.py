@@ -1,9 +1,13 @@
+import os
+from dotenv import load_dotenv
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
+import pandas as pd
+import json
 
 
 ##### MIEMBROS
@@ -12,8 +16,72 @@ import plotly.graph_objects as go
 # - Mildred Gil A00820397
 #- Mauricio Lozano A01194301
 
+# loading env
+load_dotenv()
+mapbox_token = os.getenv("MAPBOX_TOKEN")
+
 
 ###################### LOGIC ###############################
+#### Mapa areas verdes cerca de un servicio en particular
+# loading geojsons
+sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
+sector_k1_av = json.load(open("src_files/av_k1.geojson"))
+
+# loading data for loading map
+df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
+
+df_av = pd.read_csv("src_files/av_k1.csv")
+df_av = df_av.set_index(["UNION"])
+# join av with denue_av_completo using av_union
+df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
+
+df_denue = pd.read_csv("src_files/denue_k1.csv")
+df_denue = df_denue.set_index(["id"])
+df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
+
+df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
+df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
+df_denue_av_data_6366212 = df_denue_av_data[df_denue_av_data['denue_id'] == 6366212.0]
+
+map6366212 = px.choropleth_mapbox(
+    df_denue_av_data_6366212,
+    geojson=sector_k1_av,
+    locations="av_union",
+    featureidkey="properties.UNION",
+    color="av_union",
+    hover_data=df_denue_av_data_6366212,
+    color_continuous_scale=["#6C7339","#E4F279","#B0B591","#9CA653","#EDF2C2"]
+)
+
+map6366212.add_trace(go.Scattermapbox(
+    mode="markers",
+    lon=[df_denue_av_data_6366212['longitud'][0]], lat=[df_denue_av_data_6366212['latitud'][0]],
+    marker={'size': 10, 'color': ["red"]}
+))
+
+map6366212.update_layout(
+    mapbox= {
+        'accesstoken': mapbox_token,
+        'style': "mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr",
+        'center': { 'lon': -100.4068401068442, 'lat': 25.683275441075},
+        'zoom': 12,
+        'layers':
+            [
+                {
+                    'source': {
+                        'type': "FeatureCollection",
+                        'features': sector_k1_polygon["features"]
+                    },
+                    'type': 'fill', 'below': "traces", 'color': "white", "opacity": 0.2
+                }
+            ]
+    },
+    margin={'l':0, 'r':0, 'b':0, 't':0}
+)
+
+
+
+# TODO: replace with real one
 fig = go.Figure(data=[go.Scatter(
     x=[1, 2, 3, 4], y=[10, 11, 12, 13],
     text=['A<br>size: 40', 'B<br>size: 60', 'C<br>size: 80', 'D<br>size: 100'],
@@ -99,7 +167,7 @@ layout = html.Div([
     dbc.Row(
         dbc.Col(
             dcc.Graph(
-                figure=fig
+                figure=map6366212
             )
         )
     ),
