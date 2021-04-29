@@ -3,3 +3,7 @@ env/
 venv/
 
 apps/__pycache__/
+
+.env
+
+src_files/

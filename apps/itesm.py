@@ -1,9 +1,13 @@
+import os
+from dotenv import load_dotenv
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
+import pandas as pd
+import json
 
 
 ##### MIEMBROS
@@ -12,17 +16,87 @@ import plotly.graph_objects as go
 # - Mildred Gil A00820397
 #- Mauricio Lozano A01194301
 
+# loading env
+load_dotenv()
+mapbox_token = os.getenv("MAPBOX_TOKEN")
 
 ###################### LOGIC ###############################
-fig = go.Figure(data=[go.Scatter(
-    x=[1, 2, 3, 4], y=[10, 11, 12, 13],
-    text=['A<br>size: 40', 'B<br>size: 60', 'C<br>size: 80', 'D<br>size: 100'],
-    mode='markers',
-    marker=dict(
-        color=['rgb(140, 22, 22)', 'rgb(31, 103, 166)', 'rgb(191,149,23)', 'rgb(156, 166, 83)'],
-        size=[40, 60, 80, 100],
+#### Mapa servicios por area verde
+# loading geojsons
+sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
+sector_k1_av = json.load(open("src_files/av_k1.geojson"))
+
+# loading data for loading map
+df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
+
+df_av = pd.read_csv("src_files/av_k1.csv")
+df_av = df_av.set_index(["UNION"])
+# join av with denue_av_completo using av_union
+df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
+
+df_denue = pd.read_csv("src_files/denue_k1.csv")
+df_denue = df_denue.set_index(["id"])
+df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
+
+df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
+df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
+df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
+
+fig_park_5 = px.scatter_mapbox(
+    df_denue_av_data_5,
+    title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
+    lat="latitud",
+    lon="longitud",
+    color="codigo_act",
+    size="distancia",
+    color_continuous_scale=px.colors.cyclical.IceFire,
+    size_max=15,
+    zoom=10
+)
+
+fig_park_5.add_trace(
+    go.Choroplethmapbox(
+        geojson=sector_k1_av,
+        locations=[5],
+        featureidkey="properties.UNION"
     )
-)])
+)
+
+fig_park_5.update_layout(
+    mapbox = {
+        'accesstoken': mapbox_token,
+        'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
+        'center': {'lon': -100.4068401068442, 'lat': 25.683275441075},
+        'zoom': 12,
+        'layers': [
+            {
+                'source': {
+                    'type': 'FeatureCollection',
+                    'features': [sector_k1_av['features'][0]]
+                },
+                'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
+            },
+            {
+                'source': {
+                    'type': "FeatureCollection",
+                    'features': sector_k1_polygon['features']
+                },
+                'type': "fill", 'below': "traces", 'color': "white", "opacity": 0.2
+            }
+        ]
+    },
+    margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
+)
+
+#### Bubble de numero de servicios por parque
+num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
+fig = px.scatter(
+    num_services_park,
+    x="Cantidad de Servicios",
+    size="SHAPE_AREA",
+    color="NOMBRE",
+    title="Cantidad de Servicios Por Area Verde"
+)
 
 
 ############################# LAYOUT #######################
@@ -43,7 +117,7 @@ layout = html.Div([
                 nav=True,
                 in_navbar=True,
                 children=[
-                    dbc.DropdownMenuItem("Qué es?", href="#QueEs"),
+                    dbc.DropdownMenuItem("¿Qué es?", href="#QueEs"),
                     dbc.DropdownMenuItem("Descripción", href="#Description"),
                     dbc.DropdownMenuItem("Como estamos?", href="#ComoEstamos"),
                     dbc.DropdownMenuItem("Mapa"),
@@ -59,7 +133,11 @@ layout = html.Div([
             dbc.Col(children=[html.H1("Radiografía Urbana")], xs=12, sm=5),
             dbc.Col(children=[
                 dbc.Row(id="QueEs", children=dbc.Col(html.H3("Que es?"))),
-                dbc.Row(children=[dbc.Col("Lorem ipsum")])
+                dbc.Row(children=[dbc.Col(
+                    "Es un apoyo que permite visualizar los espacios públicos " +
+                    "usables del municipio de San Pedro Garza Garcia y también mostrar el nivel de " +
+                    "accessibilidad que tienen cada uno de estos espacios."
+                )])
             ], xs=12, sm=7)
         ]
     ),
@@ -79,23 +157,26 @@ layout = html.Div([
     ),
 
     dbc.Row(
-        children=dbc.Col(children="Lorem ipsum")
+        children=dbc.Col(
+            "A traves de diferentes datos del INEGI y del DENUE, " +
+            "se pudieron visualizar las diferentes actividades economicas " +
+            "cerca de cada area y tambien medir el nivel de accessibilidad por parque."
+        )
     ),
 
     ## BANNER PRINCIPAL
     dbc.Row(
         dbc.Col([
-            html.Img(src='../assets/artwall.jpg', style={'maxWidth': '100%', 'height': 'auto'})
+            html.Img(src='../assets/exposime-sanpedrogarza.png', style={'maxWidth': '100%', 'height': 'auto'})
         ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
     ),
 
     ## COMO ESTAMOS SECTION
     dbc.Row(
         id="ComoEstamos",
-        children=dbc.Col(children=[html.H2("Como Estamos?")])
+        children=dbc.Col(children=[html.H2("¿Cómo estamos?")])
     ),
 
-    ## Graph example
     dbc.Row(
         dbc.Col(
             dcc.Graph(
@@ -104,46 +185,14 @@ layout = html.Div([
         )
     ),
 
-    ## SECCIÓN 1
-    dbc.Container([
-        
-        ## Títutlo
-        dbc.Row(
-            dbc.Col(
-                html.H2('Ejemplo de título')
-            ), className='px-1 pt-4'
-        ),
-
-        ## Texto
-        dbc.Row(
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.')  
-            ), className='px-1 py-4'
+    ## Graph example
+    dbc.Row(
+        dbc.Col(
+            dcc.Graph(
+                figure=fig_park_5
+            )
         )
-
-    ]),
-
-
-    ## SECCION 2
-    dbc.Container([
-        # Título
-        dbc.Row(
-            dbc.Col(
-                html.H2('Otro ejemplo de título')
-                ),className='py-3', style={'backgroundColor': 'black','color': 'white'}
-            ),
-
-        ## Texto
-        dbc.Row([
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.'), lg=3, md=9, sm=4
-            ),
-            dbc.Col(
-                html.H5('La bicicleta tiene enormes beneficios no sólo para la salud sino también para el medio ambiente, ya que se trata de un medio de transporte que favorece la movilidad sostenible.'), lg=9, md=3, sm=8
-            ), 
-        ],className='py-3')
-
-    ]),
+    ),
 
     ######################################## TERMINA ESPACIO DE EDICIÓN ########################################
 
