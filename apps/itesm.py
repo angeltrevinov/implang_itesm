@@ -66,8 +66,8 @@ fig_park_5.update_layout(
     mapbox = {
         'accesstoken': mapbox_token,
         'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
-        'center': {'lon': -100.4068401068442, 'lat': 25.683275441075},
-        'zoom': 12,
+        'center': {'lon': -100.4006, 'lat': 25.67467},
+        'zoom': 15,
         'layers': [
             {
                 'source': {
@@ -186,6 +186,11 @@ layout = html.Div([
     ),
 
     ## Graph example
+    dbc.Row(
+        dbc.Col(children=html.H3("Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)"))
+    ),
+
+
     dbc.Row(
         dbc.Col(
             dcc.Graph(
