@@ -21,82 +21,96 @@ load_dotenv()
 mapbox_token = os.getenv("MAPBOX_TOKEN")
 
 ###################### LOGIC ###############################
-#### Mapa servicios por area verde
-# loading geojsons
+########### LOAD DATA
+##### JSONS
 sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
 sector_k1_av = json.load(open("src_files/av_k1.geojson"))
-
-# loading data for loading map
+##### CSVS
 df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
-
 df_av = pd.read_csv("src_files/av_k1.csv")
+df_denue = pd.read_csv("src_files/denue_k1.csv")
+##### SET UP TABLES
 df_av = df_av.set_index(["UNION"])
 # join av with denue_av_completo using av_union
 df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
-
-df_denue = pd.read_csv("src_files/denue_k1.csv")
 df_denue = df_denue.set_index(["id"])
 df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
-
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
 df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
-df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
 
-fig_park_5 = px.scatter_mapbox(
-    df_denue_av_data_5,
-    title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
-    lat="latitud",
-    lon="longitud",
-    color="codigo_act",
-    size="distancia",
-    color_continuous_scale=px.colors.cyclical.IceFire,
-    size_max=15,
-    zoom=10
-)
 
-fig_park_5.add_trace(
-    go.Choroplethmapbox(
-        geojson=sector_k1_av,
-        locations=[5],
-        featureidkey="properties.UNION"
+def generate_map_services():
+    ''''
+    Generates map of services by green area
+    '''
+    # Setting the area to show be area 5
+    # TODO: this needs to be dynamic
+    df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
+    # setting points of services
+    fig_park_5 = px.scatter_mapbox(
+        df_denue_av_data_5,
+        title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
+        lat="latitud",
+        lon="longitud",
+        color="codigo_act",
+        size="distancia",
+        color_continuous_scale=px.colors.cyclical.IceFire,
+        size_max=15,
+        zoom=10
     )
-)
-
-fig_park_5.update_layout(
-    mapbox = {
-        'accesstoken': mapbox_token,
-        'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
-        'center': {'lon': -100.4006, 'lat': 25.67467},
-        'zoom': 15,
-        'layers': [
-            {
-                'source': {
-                    'type': 'FeatureCollection',
-                    'features': [sector_k1_av['features'][0]]
+    # setting the area verde figure
+    fig_park_5.add_trace(
+        go.Choroplethmapbox(
+            geojson=sector_k1_av,
+            locations=[5],
+            featureidkey="properties.UNION"
+        )
+    )
+    # building the layout
+    fig_park_5.update_layout(
+        mapbox = {
+            'accesstoken': mapbox_token,
+            'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
+            'center': {'lon': -100.4006, 'lat': 25.67467},
+            'zoom': 15,
+            'layers': [
+                {
+                    'source': {
+                        'type': 'FeatureCollection',
+                        'features': [sector_k1_av['features'][0]]
+                    },
+                    'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
                 },
-                'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
-            },
-            {
-                'source': {
-                    'type': "FeatureCollection",
-                    'features': sector_k1_polygon['features']
-                },
-                'type': "fill", 'below': "traces", 'color': "white", "opacity": 0.2
-            }
-        ]
-    },
-    margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
-)
+                {
+                    'source': {
+                        'type': "FeatureCollection",
+                        'features': sector_k1_polygon['features']
+                    },
+                    'type': "fill", 'below': "traces", 'color': "white", "opacity": 0.2
+                }
+            ]
+        },
+        margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
+    )
+    return fig_park_5
 
-#### Bubble de numero de servicios por parque
-num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
-fig = px.scatter(
-    num_services_park,
-    x="Cantidad de Servicios",
-    size="SHAPE_AREA",
-    color="NOMBRE",
-    title="Cantidad de Servicios Por Area Verde"
-)
+
+def generate_bubble_graph():
+    '''
+    Genera una grafica de burbujas de las areas verdes donde:
+        - El tamaño de la burbuja es el tamaño del area verde.
+        - Su eje x es la cantidad de servicios cerca del area verde.
+        - Su eje y es la cantidad de personas cerca del area verde
+    '''
+    num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
+    fig = px.scatter(
+        num_services_park,
+        x="Cantidad de Servicios",
+        size="SHAPE_AREA",
+        color="NOMBRE",
+        title="Cantidad de Servicios Por Area Verde"
+    )
+    return fig
 
 
 ############################# LAYOUT #######################
@@ -180,7 +194,7 @@ layout = html.Div([
     dbc.Row(
         dbc.Col(
             dcc.Graph(
-                figure=fig
+                figure=generate_bubble_graph()
             )
         )
     ),
@@ -194,7 +208,7 @@ layout = html.Div([
     dbc.Row(
         dbc.Col(
             dcc.Graph(
-                figure=fig_park_5
+                figure=generate_map_services()
             )
         )
     ),
