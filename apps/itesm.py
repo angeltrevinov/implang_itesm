@@ -11,10 +11,10 @@ import json
 
 
 ##### MIEMBROS
-# - Julia Jimenez A00821428
-# - Angel Treviño A01336559
-# - Mildred Gil A00820397
-#- Mauricio Lozano A01194301
+# - Julia Jimenez   A00821428
+# - Angel Treviño   A01336559
+# - Mildred Gil     A00820397
+# - Mauricio Lozano A01194301
 
 # loading env
 load_dotenv()
@@ -27,8 +27,9 @@ sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
 sector_k1_av = json.load(open("src_files/av_k1.geojson"))
 ##### CSVS
 df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
+#df_inegi_av = pd.read_csv("src_files/")
 df_av = pd.read_csv("src_files/av_k1.csv")
-df_denue = pd.read_csv("src_files/denue_k1.csv")
+df_denue = pd.read_csv("src_files/denue_corregido.csv")
 ##### SET UP TABLES
 df_av = df_av.set_index(["UNION"])
 # join av with denue_av_completo using av_union
@@ -36,7 +37,7 @@ df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
 df_denue = df_denue.set_index(["id"])
 df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
-df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
+df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'nombre_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
 
 
 def generate_map_services():
@@ -52,9 +53,8 @@ def generate_map_services():
         title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
         lat="latitud",
         lon="longitud",
-        color="codigo_act",
+        color="nombre_act",
         size="distancia",
-        color_continuous_scale=px.colors.cyclical.IceFire,
         size_max=15,
         zoom=10
     )
@@ -92,6 +92,7 @@ def generate_map_services():
         },
         margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
     )
+    fig_park_5.update_layout(showlegend=False)
     return fig_park_5
 
 
@@ -206,11 +207,13 @@ layout = html.Div([
 
 
     dbc.Row(
-        dbc.Col(
-            dcc.Graph(
-                figure=generate_map_services()
+        [
+            dbc.Col(
+                dcc.Graph(
+                    figure=generate_map_services()
+                )
             )
-        )
+        ]
     ),
 
     ######################################## TERMINA ESPACIO DE EDICIÓN ########################################
