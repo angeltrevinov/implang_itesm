@@ -12,5 +12,6 @@ Template para proyecto de colaboración del IMPLANG y el ITESM
     ```MAPBOX_TOKEN="<Insertar mapbox token aqui>"```
    
 5. Dentro del src_files buscar el archivo ```mapbox_token.txt``` y copiar el contenido de la carpeta en donde se indica arriba y eliminar este archivo.
-6. Correr el proyecto. 
+6. Instalar dependencias
+7. Correr el proyecto
 
