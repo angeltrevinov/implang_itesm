@@ -47,15 +47,15 @@ for index, park in df_denue_av_data.drop_duplicates('av_union').iterrows():
     value = park['av_union']
     selected_services_by_park.append({'label': label, 'value': value })
 
-
+'''
 @app.callback(
     Output('map_services_by_park', 'figure'),
     Input('select_service_by_park', 'value')
 )
 def generate_map_services(selected_park):
-    ''''
+    
     Generates map of services by green area
-    '''
+    
     print("hello")
     selected_park_data = df_denue_av_data[df_denue_av_data['av_union'] == selected_park]
     # setting points of services
@@ -105,6 +105,7 @@ def generate_map_services(selected_park):
     )
     fig.update_layout(showlegend=False)
     return fig
+    '''
 
 
 def generate_bubble_graph():
