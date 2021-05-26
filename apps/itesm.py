@@ -3,18 +3,19 @@ from dotenv import load_dotenv
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import json
-
+from app import app
 
 ##### MIEMBROS
-# - Julia Jimenez A00821428
-# - Angel Treviño A01336559
-# - Mildred Gil A00820397
-#- Mauricio Lozano A01194301
+# - Julia Jimenez   A00821428
+# - Angel Treviño   A01336559
+# - Mildred Gil     A00820397
+# - Mauricio Lozano A01194301
 
 # loading env
 load_dotenv()
@@ -27,8 +28,9 @@ sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
 sector_k1_av = json.load(open("src_files/av_k1.geojson"))
 ##### CSVS
 df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
+#df_inegi_av = pd.read_csv("src_files/")
 df_av = pd.read_csv("src_files/av_k1.csv")
-df_denue = pd.read_csv("src_files/denue_k1.csv")
+df_denue = pd.read_csv("src_files/denue_corregido.csv")
 ##### SET UP TABLES
 df_av = df_av.set_index(["UNION"])
 # join av with denue_av_completo using av_union
@@ -36,38 +38,47 @@ df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
 df_denue = df_denue.set_index(["id"])
 df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
-df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
+df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'nombre_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
 
+### Create options for services by park
+selected_services_by_park = []
+for index, park in df_denue_av_data.drop_duplicates('av_union').iterrows():
+    label = park['NOMBRE'] + " " + str(park['av_union'])
+    value = park['av_union']
+    selected_services_by_park.append({'label': label, 'value': value })
 
-def generate_map_services():
-    ''''
+'''
+@app.callback(
+    Output('map_services_by_park', 'figure'),
+    Input('select_service_by_park', 'value')
+)
+def generate_map_services(selected_park):
+    
     Generates map of services by green area
-    '''
-    # Setting the area to show be area 5
-    # TODO: this needs to be dynamic
-    df_denue_av_data_5 = df_denue_av_data[df_denue_av_data['av_union'] == 5]
+    
+    print("hello")
+    selected_park_data = df_denue_av_data[df_denue_av_data['av_union'] == selected_park]
     # setting points of services
-    fig_park_5 = px.scatter_mapbox(
-        df_denue_av_data_5,
+    fig = px.scatter_mapbox(
+        selected_park_data,
         title="Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)",
         lat="latitud",
         lon="longitud",
-        color="codigo_act",
+        color="nombre_act",
         size="distancia",
-        color_continuous_scale=px.colors.cyclical.IceFire,
         size_max=15,
         zoom=10
     )
     # setting the area verde figure
-    fig_park_5.add_trace(
+    fig.add_trace(
         go.Choroplethmapbox(
             geojson=sector_k1_av,
-            locations=[5],
+            locations=[selected_park],
             featureidkey="properties.UNION"
         )
     )
     # building the layout
-    fig_park_5.update_layout(
+    fig.update_layout(
         mapbox = {
             'accesstoken': mapbox_token,
             'style': 'mapbox://styles/mildredgil/cknmcvkgm0tig17nttrh3qymr',
@@ -92,7 +103,9 @@ def generate_map_services():
         },
         margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
     )
-    return fig_park_5
+    fig.update_layout(showlegend=False)
+    return fig
+    '''
 
 
 def generate_bubble_graph():
@@ -111,7 +124,6 @@ def generate_bubble_graph():
         title="Cantidad de Servicios Por Area Verde"
     )
     return fig
-
 
 ############################# LAYOUT #######################
 layout = html.Div([
@@ -201,16 +213,27 @@ layout = html.Div([
 
     ## Graph example
     dbc.Row(
-        dbc.Col(children=html.H3("Servicios del ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)"))
+        children=[
+            dbc.Col(children=html.H3("Servicios del parque:")),
+            dbc.Col(
+                dbc.Select(
+                    id="select_service_by_park",
+                    options=selected_services_by_park,
+                    placeholder="Selecciona el parque",
+                    value=5
+                )
+            )
+        ]
     ),
 
-
     dbc.Row(
-        dbc.Col(
-            dcc.Graph(
-                figure=generate_map_services()
+        [
+            dbc.Col(
+                dcc.Graph(
+                    id="map_services_by_park"
+                )
             )
-        )
+        ]
     ),
 
     ######################################## TERMINA ESPACIO DE EDICIÓN ########################################
