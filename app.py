@@ -36,7 +36,8 @@ app.layout = dbc.Container([
 
 ])
 
-# TODO: delete this is just a test
+# TODO: Find a better way to implement callbacs
+# NOTE: Callbacks dont work on itesm.py, they seemed to work on app.py
 import os
 import json
 import pandas as pd
@@ -99,8 +100,8 @@ def generate_map_services(selected_park):
 			featureidkey="properties.UNION"
 		)
 	)
-	# building the layout
-	sector_k1_polygon.forEach()
+
+	# TODO get feature by property UNION of the geojson
 
 	fig.update_layout(
 		mapbox = {
@@ -112,7 +113,7 @@ def generate_map_services(selected_park):
 				{
 					'source': {
 						'type': 'FeatureCollection',
-						'features': [sector_k1_av['features'][1]]
+						'features': [sector_k1_av['features'][1]]  # TODO: change this for the selected area park
 					},
 					'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
 				},
