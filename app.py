@@ -66,23 +66,18 @@ df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
 df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'nombre_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
 
-### Create options for services by park
-selected_services_by_park = []
-for index, park in df_denue_av_data.drop_duplicates('av_union').iterrows():
-    label = park['NOMBRE'] + " " + str(park['av_union'])
-    value = park['av_union']
-    selected_services_by_park.append({'label': label, 'value': value })
-
 
 @app.callback(
 	Output(component_id='map_services_by_park', component_property='figure'),
-	Input(component_id='select_service_by_park', component_property='value')
+	[Input(component_id='select_service_by_park', component_property='value'), Input(component_id='show_legend_service_park', component_property='value')]
 )
-def generate_map_services(selected_park):
+def generate_map_services(selected_park, showLegend):
 	''''
 	Generates map of services by green area
 	'''
-	selected_park_data = df_denue_av_data[df_denue_av_data['av_union'] == float(selected_park)]
+	selected_park_data = df_denue_av_data[df_denue_av_data['NOMBRE'] == selected_park]
+	selected_park_data = selected_park_data[selected_park_data['denue_id'].notna()]
+
 	# setting points of services
 	fig = px.scatter_mapbox(
 		selected_park_data,
@@ -113,7 +108,7 @@ def generate_map_services(selected_park):
 				{
 					'source': {
 						'type': 'FeatureCollection',
-						'features': [sector_k1_av['features'][1]]  # TODO: change this for the selected area park
+						'features': [sector_k1_av['features'][0]]  # TODO: change this for the selected area park
 					},
 					'type': 'fill', 'below':'traces', 'color': 'green', 'opacity':1
 				},
@@ -128,7 +123,12 @@ def generate_map_services(selected_park):
 		},
 		margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
 	)
-	fig.update_layout(showlegend=False)
+	print(type(showLegend))
+	if showLegend == "0":
+		showLegend = False
+	else:
+		showLegend = True
+	fig.update_layout(showlegend=showLegend)
 	return fig
 
 

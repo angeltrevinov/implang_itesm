@@ -42,10 +42,9 @@ df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','S
 
 # Create options for services by park
 selected_services_by_park = []
-for index, park in df_denue_av_data.drop_duplicates('av_union').iterrows():
-    label = park['NOMBRE'] + " " + str(park['av_union'])
-    value = park['av_union']
-    selected_services_by_park.append({'label': label, 'value': value })
+for index, park in df_denue_av_data.drop_duplicates('NOMBRE').iterrows():
+    label = park['NOMBRE'] # + " " + str(park['av_union'])
+    selected_services_by_park.append({'label': label, 'value': label})
 
 
 def generate_sanborns():
@@ -189,7 +188,7 @@ layout = html.Div([
                     dbc.DropdownMenuItem("¿Qué es?", href="#QueEs"),
                     dbc.DropdownMenuItem("Descripción", href="#Description"),
                     dbc.DropdownMenuItem("Como estamos?", href="#ComoEstamos"),
-                    dbc.DropdownMenuItem("Mapa"),
+                    dbc.DropdownMenuItem("Mapa", href="#Map"),
                     dbc.DropdownMenuItem("Datos")
                 ]
             )
@@ -268,6 +267,7 @@ layout = html.Div([
 
     # Mostrar servicios en el mapa basado en su area
     dbc.Row(
+        id="Map",
         children=[
             dbc.Col(children=html.H3("Servicios del parque:")),
             dbc.Col(
@@ -275,7 +275,14 @@ layout = html.Div([
                     id="select_service_by_park",
                     options=selected_services_by_park,
                     placeholder="Selecciona el parque",
-                    value=5
+                    value="ÁREA DEP. MANUEL J. CLOUTHIER (CORREGIDORA-CROMO)"
+                )
+            ),
+            dbc.Col(
+                dbc.Select(
+                    id="show_legend_service_park",
+                    options=[{ 'label': 'Mostar Leyenda', 'value': 1}, {'label': 'Esconder Leyenda', 'value': 0}],
+                    value="0"
                 )
             )
         ]
