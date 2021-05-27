@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import json
 from app import app
+import numpy
 
 ##### MIEMBROS
 # - Julia Jimenez   A00821428
@@ -21,17 +22,16 @@ from app import app
 load_dotenv()
 mapbox_token = os.getenv("MAPBOX_TOKEN")
 
-###################### LOGIC ###############################
-########### LOAD DATA
-##### JSONS
+# --------------------- LOGIC ------------------------------
+# ------------------- LOAD DATA ----------------------------
+# JSONS
 sector_k1_polygon = json.load(open("src_files/sector_k1.geojson"))
 sector_k1_av = json.load(open("src_files/av_k1.geojson"))
-##### CSVS
+# CSVs
 df_denue_av = pd.read_csv("src_files/completo_denue_av.csv")
-#df_inegi_av = pd.read_csv("src_files/")
 df_av = pd.read_csv("src_files/av_k1.csv")
 df_denue = pd.read_csv("src_files/denue_corregido.csv")
-##### SET UP TABLES
+# SET UP TABLES
 df_av = df_av.set_index(["UNION"])
 # join av with denue_av_completo using av_union
 df_denue_av_join = df_denue_av.join(df_av, on="av_union", how='right')
@@ -40,12 +40,73 @@ df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
 df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'nombre_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
 
-### Create options for services by park
+# Create options for services by park
 selected_services_by_park = []
 for index, park in df_denue_av_data.drop_duplicates('av_union').iterrows():
     label = park['NOMBRE'] + " " + str(park['av_union'])
     value = park['av_union']
     selected_services_by_park.append({'label': label, 'value': value })
+
+
+def generate_sanborns():
+    """
+    Genera una grafica de sunburst que refleja:
+     - los parques con mayor cantidad de servicos
+     - los servicios mas comunes de ese parque.
+
+    :return: Grafica de sunburst
+    :rtype:figure
+    """
+    character = numpy.array("")
+    parent = numpy.array(["San Pedro"])
+    value = numpy.array([10])
+    characterD = numpy.append(character, df_denue_av_data["nombre_act"])
+    parentD = numpy.append(parent, df_denue_av_data["NOMBRE"])
+    valuesD = numpy.append(value, df_denue_av_data["distancia"])
+
+    data = {'nombre_act': characterD, 'NOMBRE': parentD, 'distancia': valuesD}
+    df = pd.DataFrame(data, columns=['nombre_act', 'NOMBRE', 'distancia'])
+    pd.set_option('display.max_rows', df.shape[0] + 1)
+    mod_df = df.drop([df.index[2484]])
+    mod_df = mod_df.drop([mod_df.index[1065]])
+    mod_df = mod_df.drop([df.index[2483]])
+
+    df1 = mod_df[mod_df.groupby('nombre_act')['nombre_act'].transform('size') > 150]
+    df2 = df1[df1.groupby('NOMBRE')['NOMBRE'].transform('size') > 60]
+    pd.set_option('display.max_rows', df1.shape[0] + 1)
+    '''fig =px.sunburst(
+        data,
+        names='nombre_act',
+        parents='NOMBRE',
+        #values='values',
+    )'''
+    # df.to_csv("/content/drive/Shareddrives/VisualizacionE7/archivos_filtrados_k1/sunburst.csv", index=False)
+    # TODO: check method to zoom
+    # https://plotly.com/python/sunburst-charts/
+    fig = px.sunburst(df2, path=['NOMBRE', 'nombre_act'])
+
+    return fig
+
+
+def generate_bubble_graph():
+    '''
+    Genera una grafica de burbujas de las areas verdes donde:
+        - El tamaño de la burbuja es el tamaño del area verde.
+        - Su eje x es la cantidad de servicios cerca del area verde.
+        - Su eje y es la cantidad de personas cerca del area verde
+    :return Figura de burbujas
+    :type figure
+    '''
+    num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
+    fig = px.scatter(
+        num_services_park,
+        x="Cantidad de Servicios",
+        size="SHAPE_AREA",
+        color="NOMBRE",
+        title="Cantidad de Servicios Por Area Verde"
+    )
+    return fig
+
 
 '''
 @app.callback(
@@ -107,24 +168,6 @@ def generate_map_services(selected_park):
     return fig
     '''
 
-
-def generate_bubble_graph():
-    '''
-    Genera una grafica de burbujas de las areas verdes donde:
-        - El tamaño de la burbuja es el tamaño del area verde.
-        - Su eje x es la cantidad de servicios cerca del area verde.
-        - Su eje y es la cantidad de personas cerca del area verde
-    '''
-    num_services_park = df_denue_av_data.groupby(["av_union", 'SHAPE_AREA', 'NOMBRE']).size().reset_index(name="Cantidad de Servicios")
-    fig = px.scatter(
-        num_services_park,
-        x="Cantidad de Servicios",
-        size="SHAPE_AREA",
-        color="NOMBRE",
-        title="Cantidad de Servicios Por Area Verde"
-    )
-    return fig
-
 ############################# LAYOUT #######################
 layout = html.Div([
 
@@ -153,7 +196,7 @@ layout = html.Div([
         ]),
 
 
-    ## QUE ES? SECTION
+    # QUE ES? SECTION
     dbc.Row(
         children=[
             dbc.Col(children=[html.H1("Radiografía Urbana")], xs=12, sm=5),
@@ -169,14 +212,14 @@ layout = html.Div([
     ),
 
 
-    ## BANNER PRINCIPAL
+    # BANNER PRINCIPAL
     dbc.Row(
         dbc.Col([
             html.Img(src='../assets/artwall.jpg', style={'maxWidth':'100%', 'height':'auto'})
         ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
     ),
 
-    ## DESCRIPTION SECTION
+    # DESCRIPTION SECTION
     dbc.Row(
         id="Description",
         children=dbc.Col(children=[html.H2("Descripción:")])
@@ -190,19 +233,20 @@ layout = html.Div([
         )
     ),
 
-    ## BANNER PRINCIPAL
+    # BANNER PRINCIPAL
     dbc.Row(
         dbc.Col([
             html.Img(src='../assets/exposime-sanpedrogarza.png', style={'maxWidth': '100%', 'height': 'auto'})
         ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'})
     ),
 
-    ## COMO ESTAMOS SECTION
+    # COMO ESTAMOS SECTION
     dbc.Row(
         id="ComoEstamos",
         children=dbc.Col(children=[html.H2("¿Cómo estamos?")])
     ),
 
+    # Grafica de burbuja cant. Personas x cant. Services
     dbc.Row(
         dbc.Col(
             dcc.Graph(
@@ -211,7 +255,18 @@ layout = html.Div([
         )
     ),
 
-    ## Graph example
+    # Sanborns Graph
+    dbc.Row(
+        children=[
+            dbc.Col(
+                dcc.Graph(
+                    figure=generate_sanborns()
+                )
+            )
+        ]
+    ),
+
+    # Mostrar servicios en el mapa basado en su area
     dbc.Row(
         children=[
             dbc.Col(children=html.H3("Servicios del parque:")),
