@@ -710,7 +710,52 @@ layout = html.Div([
                 children=[
                     dbc.Col(
                         children=[
-                            html.H2("¿Quién vive a tan solo 5 minutos caminando?")
+                            html.H2("Datos")
+                        ]
+                    ),
+                ]
+            ),
+
+            dbc.Row(
+                children=[
+                    dbc.Col(
+                        children=[
+                            html.P(children=["Población"], style={"font-size": "20px"}),
+                            html.P(children=["275,920 de personas"], style={"font-size": "20px"})
+                        ],
+                        style={'align-items': 'center', "border-left": "5px solid #8C1616"}
+                    ),
+                    dbc.Col(
+                        children=[
+                            html.P(children=["Área de San Pedro"], style={"font-size": "20px"}),
+                            html.P(children=["11,407,606.0 metros cuadrados"], style={"font-size": "20px"})
+                        ],
+                        style={'align-items': 'center', "border-left": "5px solid #8C1616"}
+                    ),
+                    dbc.Col(
+                        children=[
+                            html.P(children=["Área verde"], style={"font-size": "20px"}),
+                            html.P(children=["392,820 metros cuadrados"], style={"font-size": "20px"})
+                        ],
+                        style={'align-items': 'center', "border-left": "5px solid #8C1616"}
+                    ),
+                    dbc.Col(
+                        children=[
+                            html.P(children=["1 persona por cada"], style={"font-size": "20px"}),
+                            html.P(children=["1.42 metros cuadrados"], style={"font-size": "20px"}),
+                            html.P(children=["de área verde"], style={"font-size": "20px"}),
+                        ],
+                        style={'align-items': 'center', "border-left": "5px solid #8C1616"}
+                    ),  
+                ],
+            ),
+
+            dbc.Row(
+                className="my-5",
+                children=[
+                    dbc.Col(
+                        children=[
+                            html.H2("¿Quién vive a solo 5 minutos caminando?")
                         ]
                     ),
                 ]
@@ -728,7 +773,7 @@ layout = html.Div([
                                     dbc.CardBody(
                                         children=[
                                             html.H2(
-                                                children=["275,920"],
+                                                children=["Mujeres"],
                                                 style={'color':"#BF9517", "font-size": "3rem"},
                                                 className="mx-2 my-3"
                                             ),
@@ -803,6 +848,17 @@ layout = html.Div([
                         ],
                         xs=12,
                         xl=6,
+                    ),
+                ]
+            ),
+
+            dbc.Row(
+                className="my-5",
+                children=[
+                    dbc.Col(
+                        children=[
+                            html.H2("Detalle por género y edad")
+                        ]
                     ),
                 ]
             ),
