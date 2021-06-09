@@ -92,17 +92,38 @@ layout = html.Div([
                                 children=[
                                     dbc.Row(children=[
                                         dbc.Col(children=[
-                                            html.H1(children=["Conoce lo verde de tu ciudad"], style={'font-size': '48px'})
+                                            html.H1(children=["Titulo chidorris"], style={'font-size': '48px'})
                                         ], xs=8),
                                         dbc.Col(children=[
-                                            dbc.Row(children=dbc.Col(html.H3("Radiografía Urbana"))),
-                                            dbc.Row(children=[dbc.Col(
-                                                children=[html.P(children=[
-                                                    "Apoyo visual de los espacios públicos " +
-                                                "usables del municipio de San Pedro Garza Garcia. Descubre el nivel de " +
-                                                "accessibilidad que tienen cada uno de estos espacios."
-                                                ], style={"font-size": "20px"})]
-                                            )])
+                                            dbc.Row(
+                                                dbc.Col(
+                                                    className="d-flex",
+                                                    children=[
+                                                html.H3("Radiografía urbana"), 
+                                                html.Span(style={ "background": "#8C1616", "transform": "rotate(-45deg)", "width": "8px", "height": "8px", "margin": "15px",}),
+                                                html.H3("San Pedro Garza García")]),
+                                            ),
+                                            dbc.Row(
+                                                className="mt-3",
+                                                children=[
+                                                    dbc.Col(
+                                                        children=[
+                                                            html.P(children=[
+                                                                "Conoce nuestra plataforma interactiva que te permite explorar San Pedro a un clic de distancia."
+                                                            ], 
+                                                            style={"font-size": "20px"}),
+                                                            html.P(children=[
+                                                                "Aprende sobre sus parques, ubicaciones, población, servicios y más…"
+                                                            ], 
+                                                            style={"font-size": "20px"}),
+                                                            html.P(children=[
+                                                                "El objetivo es que las preguntas que tengas acerca del municipio las puedas resolver jugando con los mapas que encuentras aquí. "
+                                                            ], 
+                                                            style={"font-size": "20px"}),
+                                                        ]
+                                                    )
+                                                ]
+                                            )
                                         ], xs=12)
                                     ])
                                 ]
@@ -121,7 +142,7 @@ layout = html.Div([
     dbc.Row(
         children=[
             dbc.Col([
-                html.Img(src='../assets/Rectangle 3.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
+                html.Img(src='../assets/radiografia_urbana.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
             ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'}),
         ],
         style={'background-color': '#BF9517', 'margin-top': '100px', 'margin-bottom': '100px'}
@@ -130,6 +151,13 @@ layout = html.Div([
     # KPI Principales
     dbc.Container(
         children=[
+            dbc.Row(
+                dbc.Col(
+                    className="mb-5",
+                    children=[
+                        html.H1(children=["Sabías que..."], style={'font-size': '64px'})
+                    ], xs=8),
+            ),
             dbc.Row(
                 dbc.Col(
                     html.H3(
@@ -154,7 +182,7 @@ layout = html.Div([
                                             ),
                                             html.Img(src='../assets/nature_2.png', style={'height': '100px'}),
                                             html.P(
-                                                children=["Secciones de áreas verdes"],
+                                                children=["Áreas verdes"],
                                                 style={"font-size": "24px"}
                                             )
                                         ],
@@ -263,24 +291,10 @@ layout = html.Div([
                                         dbc.Col(children=[
                                             dbc.Row(children=[dbc.Col(
                                                 children=[html.P(children=[
-                                                    "Dentro de una ciudad las áreas verdes son parte importante del paisaje urbano e importante para los ciudadanos."
+                                                    "Uno de los atractivos de San Pedro Garza García son sus áreas verdes. Adelante, comienza a buscar las que conoces. ¿Qué tal el parque que está al lado de tu casa, del trabajo, dónde paseas a tu perro? El que quieras. Comienza con aquellos lugares que te resulten familiares. Aunque los conozcas como la palma de tu mano, de seguro vas a aprender algo nuevo. "
                                                 ], style={"font-size": "20px"})]
                                             )])
                                         ], xs=12),
-                                        dbc.Col(children=[
-                                            dbc.Row(children=[dbc.Col(
-                                                children=[html.P(children=[
-                                                    "Content"
-                                                ], style={"font-size": "20px"})]
-                                            )])
-                                        ], xs=12),
-                                        dbc.Col(children=[
-                                            dbc.Row(children=[dbc.Col(
-                                                children=[html.P(children=[
-                                                    "Content"
-                                                ], style={"font-size": "20px"})]
-                                            )])
-                                        ], xs=12)
                                     ])
                                 ],
                                 style={"border-left": "5px solid #8C1616", "padding-left": "20px"}
@@ -302,7 +316,7 @@ layout = html.Div([
     dbc.Row(
         children=[
             dbc.Col([
-                html.Img(src='../assets/Rectangle 5.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
+                html.Img(src='../assets/parque_san_pedro.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
             ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'}),
         ],
         style={'background-color': '#BF9517', 'margin-top': '100px', 'margin-bottom': '100px'}
@@ -468,7 +482,7 @@ layout = html.Div([
     dbc.Row(
         children=[
             dbc.Col([
-                html.Img(src='../assets/Rectangle 4.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
+                html.Img(src='../assets/cerro_silla.png', style={'maxWidth':'100%', 'height':'auto', 'width': '100%',})
             ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'}),
         ],
         style={'background-color': '#BF9517', 'margin-top': '100px', 'margin-bottom': '100px'}
