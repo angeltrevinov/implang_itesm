@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 import json
+import base64
 
 # loading env
 load_dotenv()
@@ -19,6 +20,7 @@ sector_k1_av = json.load(open("src_files/av_k1.geojson"))
 df_denue_av = pd.read_csv("src_files/completo_denue_av.csv") #denue with green areas data
 df_av = pd.read_csv("src_files/av_k1.csv") #green areas
 df_denue = pd.read_csv("src_files/denue_corregido.csv")  #denue
+df_av_inegi = pd.read_csv("src_files/inegi_av_98.csv") #inegi
 
 ##### SET UP TABLES
 df_av = df_av.set_index(["UNION"])
@@ -51,6 +53,62 @@ def generate_bubble_graph():
         color="NOMBRE",
         title=""
     )
+    return fig
+
+def generate_donut_graph():
+    '''
+    Genera grafica de donut con los datos poblacionales
+    '''
+    
+    #prepare inegi data
+    df_ages = df_av_inegi[["POBTOT", 'P_0A2', 'P_3A5', 'P_6A11', 'P_8A14', 'P_15A17', 'P_18A24', 'P_60YMAS']].fillna(0).replace("*", 0).astype(int)
+    df_ages["P_25A59"] =  df_ages["POBTOT"] - (df_ages["P_0A2"] + df_ages["P_3A5"] + df_ages["P_6A11"] + df_ages["P_8A14"] + df_ages["P_15A17"] + df_ages["P_18A24"] + df_ages["P_60YMAS"])
+    df_ages_sum = df_ages.agg(
+        {
+            'P_0A2': ['sum'], 
+            'P_3A5': ['sum'], 
+            'P_6A11': ['sum'],
+            'P_8A14': ['sum'],
+            'P_15A17': ['sum'],
+            'P_18A24': ['sum'],
+            'P_25A59': ['sum'],
+            'P_60YMAS': ['sum'],
+            'POBTOT': ['sum'],
+        }
+        ) 
+
+    df_ages_sum.rename(columns={
+            'P_0A2': '0 a 2 años',
+            'P_3A5': '3 a 5 años',
+            'P_6A11': '6 a 11 años',
+            'P_8A14': '8 a 14 años',
+            'P_15A17': '15 a 17 años',
+            'P_18A24': '18 a 24 años',
+            'P_25A59': '25 a 59 años',
+            'P_60YMAS': '60+ años',
+            'POBTOT': 'total',
+        }, inplace=True)
+
+    df_ages_sum = df_ages_sum.melt(
+            var_name="edad", 
+            value_name="personas")
+
+    fig = px.pie(df_ages_sum[df_ages_sum['edad'] != "total"], values='personas', names='edad', color='edad', hole=.35,
+             color_discrete_map={
+                '0 a 2 años': "#B0B591",
+                '3 a 5 años': "#9CA653",
+                '6 a 11 años': "#A68114",
+                '8 a 14 años': "#BF9517",
+                '15 a 17 años': "#EDF2C2",
+                '18 a 24 años': '#E0AF1B',
+                '25 a 59 años': '#FFE359',
+                '60+ años': '#FFC71F'
+                })
+                
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(uniformtext_minsize=10, uniformtext_mode='hide')
+    fig.update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=350)
+
     return fig
 
 ############################# LAYOUT #######################
@@ -109,14 +167,9 @@ layout = html.Div([
                                                     dbc.Col(
                                                         children=[
                                                             html.P(children=[
-                                                                "Conoce nuestra plataforma interactiva que te permite explorar San Pedro a un clic de distancia."
-                                                            ], 
-                                                            style={"font-size": "20px"}),
-                                                            html.P(children=[
-                                                                "Aprende sobre sus parques, ubicaciones, población, servicios y más…"
-                                                            ], 
-                                                            style={"font-size": "20px"}),
-                                                            html.P(children=[
+                                                                "Conoce nuestra plataforma interactiva que te permite explorar San Pedro a un clic de distancia.",
+                                                                " Aprende sobre sus parques, ubicaciones, población, servicios y más…",
+                                                                html.Br(),
                                                                 "El objetivo es que las preguntas que tengas acerca del municipio las puedas resolver jugando con los mapas que encuentras aquí. "
                                                             ], 
                                                             style={"font-size": "20px"}),
@@ -152,20 +205,15 @@ layout = html.Div([
     dbc.Container(
         children=[
             dbc.Row(
-                dbc.Col(
-                    className="mb-5",
-                    children=[
-                        html.H1(children=["Sabías que..."], style={'font-size': '64px'})
-                    ], xs=8),
+                className="d-flex mb-5",
+                children=[
+                    html.H1(children=["Sabías que",html.H3(
+                        children=["hasta el año 2020 se tiene registro que hay..."],
+                        className="ml-3 text-center"
+                    )], style={'font-size': '64px', 'display': 'flex', 'align-items': 'baseline'}),
+                ]
             ),
-            dbc.Row(
-                dbc.Col(
-                    html.H3(
-                        children=["Durante el año 2020 se tuvieron los siguientes datos"],
-                        className="mb-5 text-center"
-                    )
-                )
-            ),
+            
             dbc.Row(
                 children=[
                     dbc.Col(
@@ -182,7 +230,7 @@ layout = html.Div([
                                             ),
                                             html.Img(src='../assets/nature_2.png', style={'height': '100px'}),
                                             html.P(
-                                                children=["Áreas verdes"],
+                                                children=["Áreas verdes en la ciudad"],
                                                 style={"font-size": "24px"}
                                             )
                                         ],
@@ -191,32 +239,8 @@ layout = html.Div([
                                 ]
                             ),
                         ],
-                        xs=3
-                    ),
-                    dbc.Col(
-                        children=[
-                            dbc.Card(
-                                style={'min-height': '350px', "box-sizing": "border-box", "box-shadow": "0px 1px 4px rgba(0, 0, 0, 0.2)", "border-radius": "6px"},
-                                children=[
-                                    dbc.CardBody(
-                                        children=[
-                                            html.H2(
-                                                children=["~79"],
-                                                style={'color':"#BF9517", "font-size": "3rem"},
-                                                className="mx-2 my-3"
-                                            ),
-                                            html.Img(src='../assets/bussiness.png', style={'height': '100px'}),
-                                            html.P(
-                                                children=["Negocios por área verde"],
-                                                style={"font-size": "24px"}
-                                            )
-                                        ],
-                                        className="text-center"
-                                    )
-                                ]
-                            ),
-                        ],
-                        xs=3
+                        xs=12,
+                        xl=3,
                     ),
                     dbc.Col(
                         children=[
@@ -232,7 +256,7 @@ layout = html.Div([
                                             ),
                                             html.Img(src='../assets/green_area.png', style={'height': '100px'}),
                                             html.P(
-                                                children=["Personas con acceso"],
+                                                children=["Personas viviendo a 5 minutos"],
                                                 style={"font-size": "24px"}
                                             )
                                         ],
@@ -241,8 +265,37 @@ layout = html.Div([
                                 ]
                             ),
                         ],
-                        xs=3
+                        xs=12,
+                        xl=3,
                     ),
+
+                    dbc.Col(
+                        children=[
+                            dbc.Card(
+                                style={'min-height': '350px', "box-sizing": "border-box", "box-shadow": "0px 1px 4px rgba(0, 0, 0, 0.2)", "border-radius": "6px"},
+                                children=[
+                                    dbc.CardBody(
+                                        children=[
+                                            html.H2(
+                                                children=["~79"],
+                                                style={'color':"#BF9517", "font-size": "3rem"},
+                                                className="mx-2 my-3"
+                                            ),
+                                            html.Img(src='../assets/bussiness.png', style={'height': '100px'}),
+                                            html.P(
+                                                children=["Negocios por cada área"],
+                                                style={"font-size": "24px"}
+                                            )
+                                        ],
+                                        className="text-center"
+                                    )
+                                ]
+                            ),
+                        ],
+                        xs=12,
+                        xl=3,
+                    ),
+                    
                     dbc.Col(
                         children=[
                             dbc.Card(
@@ -257,7 +310,7 @@ layout = html.Div([
                                             ),
                                             html.Img(src='../assets/park.png', style={'height': '100px'}),
                                             html.P(
-                                                children=["m² de area verde"],
+                                                children=["m² de solo área verde"],
                                                 style={"font-size": "24px"}
                                             )
                                         ],
@@ -266,9 +319,41 @@ layout = html.Div([
                                 ]
                             ),
                         ],
-                        xs=3
+                        xs=12,
+                        xl=3,
                     )
                 ],
+            ),
+            dbc.Row(
+                className="mt-5",
+                children=[
+                dbc.Col(
+                    html.H3(
+                        children=["¿Cuántas áreas verdes conoces tú?"],
+                        className="mb-5 text-center"
+                    )
+                )]
+            ),
+
+            dbc.Row(
+                className="mt-3",
+                children=[
+                dbc.Col(
+                    html.P(
+                        children=["Cada uno de estos parques tiene negocios que los rodean. Así como las viviendas tienen amenidades, los parques tienen servicios. Además de disfrutar de una bonita vista y un paseo relajante, también puedes visitar tiendas de abarrotes, papelerías, restaurantes, cafeterías y demás. Lo que sea que necesites, lo tienes a tu alcance."],
+                        className="mb-5"
+                    )
+                )]
+            ),
+
+            dbc.Row(
+                children=[
+                dbc.Col(
+                    html.P(
+                        children=["¿Te has preguntado cuántos servicios tiene tu parque favorito? ¿Cuáles servicios consideras más importantes? Ya sea que te guste ir al parque y después consentirte con algún antojito de algún restaurante, o quizás tomar un café, de seguro vas al parque también por aquellos lugares que te gusta visitar a unos cuantos pasos de distancia."],
+                        className="mb-5"
+                    )
+                )]
             ),
         ],
     ),
@@ -328,7 +413,23 @@ layout = html.Div([
         children=[
             dbc.Row(
                 children=[
-                    dbc.Col(children=html.H3("Ánalisis General")),
+                    dbc.Col(children=html.H3("¡Explora!")),
+                ]
+            ),
+
+            dbc.Row(
+                children=[
+                    dbc.Col(children=html.P("Aquí tienes un mapa con las áreas verdes del municipio. "\
+                        + "¿Te haz preguntado cómo se ven por categorías? ¿Cuál es el más grande, el más poblado?"\
+                        + "¿Cuantas casas hay por cada uno? y ¿servicios cercanos? Usa los filtros para verlos a más detalle."
+                        )),
+                ]
+            ),
+
+            dbc.Row(
+                className="mb-3",
+                children=[
+                    dbc.Col(children=html.P("Con esto en mente, déjate llevar por tu curiosidad… ")),
                 ]
             ),
 
@@ -337,17 +438,19 @@ layout = html.Div([
                 children=[
                     dbc.Col(
                         dbc.RadioItems(
+                            className="d-flex justify-content-between",
                             options=[
-                                {"label": "Ranking", "value": "ranking"},
-                                {"label": "Cantidad de servicios", "value": "cantidad de servicios"},
-                                {"label": "Tipología", "value": "TIPOLOGIA"},
                                 {"label": "Población", "value": "POBTOT"},
                                 {"label": "Viviendas", "value": "VIVTOT"},
                                 {"label": "Densidad Poblacional", "value": "densidad poblacional"},
+                                {"label": "Cantidad de servicios", "value": "cantidad de servicios"},
+                                {"label": "Tipología", "value": "TIPOLOGIA"},
+                                {"label": "* Puntuación", "value": "ranking"},
                             ],
                             value="ranking",
                             id="radio_ranking_filter",
                             inline=True,
+                            labelCheckedStyle={"color": "#8C1616"},
                         )
                     ),
                 ]
@@ -364,47 +467,82 @@ layout = html.Div([
             ),
 
             dbc.Row(
-                className="mt-5",
+                className="mt-1",
                 children=[
-                    dbc.Col(children=html.H3("Servicios y demografía por área verde")),
+                    dbc.Col(
+                        children=
+                    html.Span(
+                        style={"font-size": "12px"},
+                        children=["* La puntuación está calculada tomando en cuenta la cantidad de servicios, población, viviendas y densidad poblacional."]
+                        )
+                    ),
                 ]
             ),
 
-             dbc.Row(
-                className="mb-2",
+
+            dbc.Row(
+                className="mt-5",
+                children=[
+                    dbc.Col(children=html.H3("¿Buscas un área en específico?")),
+                ]
+            ),
+
+            dbc.Row(
+                className="mt-1 mb-3",
+                children=[
+                    dbc.Col(children=html.P("Aquí puedes buscar tu parque favorito o el más cercano a tu casa, ¡el que gustes! Puedes observar la cantidad de hombres o mujeres que hay en el área, las viviendas, la densidad poblacional y el tamaño del área. Puedes buscar el parque más grande, el más chico, el que tiene mayor tamaño, donde hay más gente, etc. Busca la respuesta cada una de tus preguntas con este mapa interactivo.")),
+                ]
+            ),
+
+            dbc.Row(
                 children=[
                     dbc.Col(
-                        dbc.Select(
-                            id="select_service_by_park",
-                            options=selected_services_by_park,
-                            placeholder="Selecciona el parque",
-                            value='PARQUE VERDE LIMON'
-                        )
-                    ),
-                    
-                    dbc.RadioItems(
-                        options=[
-                            {"label": "Viviendas", "value": "viviendas"},
-                            {"label": "Población", "value": "población"},
-                            {"label": "Mujeres", "value": "mujeres"},
-                            {"label": "Hombres", "value": "hombres"},
-                            {"label": "Área", "value": "area"},
-                            {"label": "Densidad poblacional", "value": "densidad poblacional"},
-                        ],
-                        value="viviendas",
-                        id="radio_filter",
-                        inline=True,
+                        [
+                            dbc.Label("Área verde"),
+                            dbc.Select(
+                                id="select_service_by_park",
+                                options=selected_services_by_park,
+                                placeholder="Selecciona el parque",
+                                value='PARQUE VERDE LIMON'
+                            )
+                        ]
                     ),
 
-                    dbc.Checklist(
-                        options=[
-                            {"label": "Servicios", "value": "services"},
-                        ],
-                        value=["services"],
-                        id="switches_servicios",
-                        switch=True,
-                    ),
+                    dbc.Col(
+                        children=[
+                            dbc.Label("Filtros"),
+                            dbc.RadioItems(
+                            className="d-flex justify-content-between mb-3",
+                            options=[
+                                {"label": "Viviendas", "value": "viviendas"},
+                                {"label": "Población", "value": "población"},
+                                {"label": "Mujeres", "value": "mujeres"},
+                                {"label": "Hombres", "value": "hombres"},
+                                {"label": "Área", "value": "area"},
+                                {"label": "Densidad", "value": "densidad poblacional"},
+                            ],
+                            value="viviendas",
+                            id="radio_filter",
+                            inline=True,
+                        ),]
+                    )
                 ]
+            ),
+            
+            
+            dbc.Row(
+                    className="my-3",
+                    children=[dbc.Col(
+                        children=[
+                            dbc.Checklist(
+                                options=[
+                                    {"label": "Visualizar servicios", "value": "services"},
+                                ],
+                                value=["services"],
+                                id="switches_servicios",
+                            )
+                        ]
+                    )]
             ),
 
             dbc.Row(
@@ -439,27 +577,27 @@ layout = html.Div([
                                         dbc.Col(children=[
                                             dbc.Row(children=[dbc.Col(
                                                 children=[html.P(children=[
-                                                    "Sabemos que un área verde es un punto de reunión muy concurrido para todos y los negocios son beneficiados al encontrarse cerca.",
+                                                    "¿Los parques son más populares por los negocios que los rodean o los negocios son más exitosos como las áreas verdes que hay a su alrededor? Los parques suelen ser un punto de reunión muy común. Quizás después de estar un rato al aire libre gustes ir a un restaurante, por nieve o tal vez un café. ¿A cuál irías? Si vas seguido, es probable que sea el más cercano, por la comodidad de tenerlo al alcance.",
                                                 ], style={"font-size": "20px"})]
                                             )]),
                                             dbc.Row(children=[dbc.Col(
                                                 children=[html.P(children=[
-                                                    "En total hay ",
+                                                    "Los servicios que se pueden apreciar en los mapas también son escuelas, papelerías, hospitales y muchos más. En total, hay ",
                                                     html.Strong(children=["688 negocios"], style={"color": "#8C1616"}),
-                                                    " diferentes dentro del Sector K1", 
+                                                    " diferentes en la zona.", 
                                                 ], style={"font-size": "20px"})]
                                             )]),
                                             dbc.Row(children=[dbc.Col(
                                                 children=[html.P(children=[
-                                                    "Alrededor de cada area verde hay en promedio ", 
-                                                    html.Strong(children=["79 negocios"], style={"color": "#8C1616"}),
-                                                    " a una distancia radial menor de 400 metros"
+                                                    "¿Sabías que alrededor de cada área verde hay un promedio de ", 
+                                                    html.Strong(children=["79 negocios a 5 minutos caminando?"], style={"color": "#8C1616"}),
+                                                    " Ahora lo sabes."
                                                 ], style={"font-size": "20px"})]
                                             )]),
                                             dbc.Row(children=[dbc.Col(
                                                 children=[html.P(children=[
-                                                    "Los comercios más frecuentes son", 
-                                                    html.Strong(children=[" tiendas de abarrotes, comercio de cervezas, papelerias, escuelas preescolares y restaurantes de tacos y tortas"], style={"color": "#8C1616"}),
+                                                    " Los comercios más populares son ", 
+                                                    html.Strong(children=[" las tiendas de abarrotes, comercio de cervezas, papelerías, escuelas preescolares y restaurantes de tacos y tortas."], style={"color": "#8C1616"}),
                                                 ], style={"font-size": "20px"})]
                                             )])
                                         ], xs=12)
@@ -552,6 +690,7 @@ layout = html.Div([
         ]
     ),
 
+
     ## IMAGEN
     dbc.Row(
         children=[
@@ -560,6 +699,115 @@ layout = html.Div([
             ], style={'color': 'white', 'position': 'relative', 'textAlign': 'center'}),
         ],
         style={'background-color': '#BF9517', 'margin-top': '100px', 'margin-bottom': '100px'}
+    ),
+
+    
+    ## COMO ESTAMOS SECTION
+    dbc.Container(
+        children=[
+            dbc.Row(
+                className="mb-5",
+                children=[
+                    dbc.Col(
+                        children=[
+                            html.H2("¿Quién vive a tan solo 5 minutos caminando?")
+                        ]
+                    ),
+                ]
+            ),
+            dbc.Row(
+                id="ComoEstamos",
+                children=
+                [
+                    dbc.Col(
+                        children=[
+                            dbc.Card(
+                                className="my-3",
+                                style={'min-height': '350px', "box-sizing": "border-box", "box-shadow": "0px 1px 4px rgba(0, 0, 0, 0.2)", "border-radius": "6px"},
+                                children=[
+                                    dbc.CardBody(
+                                        children=[
+                                            html.H2(
+                                                children=["275,920"],
+                                                style={'color':"#BF9517", "font-size": "3rem"},
+                                                className="mx-2 my-3"
+                                            ),
+                                            dbc.Row(
+                                                className="d-flex justify-content-center",
+                                                style={"align-items": "flex-end"},
+                                                children=[
+                                                    html.Div(
+                                                        style={"margin-right": "4px","background-color": "#1F67A6", "height": "336px", "flex-direction": "column", "justify-content": "space-evenly", "display": "flex"},
+                                                        children=[
+                                                            html.Img(
+                                                                width=200,
+                                                                src='data:image/svg+xml;base64,{}'.format(
+                                                                base64.b64encode(open("assets/male.svg", 'rb').read()).decode() 
+                                                            )),
+                                                            html.P(style={"font-size": "28px", "font-weight": "bold"},className="text-white",children=["49%"])
+                                                        ]
+                                                    ),
+                                                    html.Div(
+                                                        style={"background-color": "#8C1616", "height": "350px", "flex-direction": "column", "justify-content": "space-evenly", "display": "flex"},
+                                                        children=[
+                                                            html.Img(
+                                                                width=200,
+                                                                src='data:image/svg+xml;base64,{}'.format(
+                                                                base64.b64encode(open("assets/female.svg", 'rb').read()).decode() 
+                                                            )),
+                                                            html.P(style={"font-size": "28px", "font-weight": "bold"},className="text-white",children=["51%"])
+                                                        ]
+                                                    ),
+                                                ]
+                                            ),
+                                            html.P(
+                                                className="mt-3",
+                                                children=["Personas tienen acceso a un área verde o más"],
+                                                style={"font-size": "24px"}
+                                            )
+                                        ],
+                                        className="text-center"
+                                    )
+                                ]
+                            ),
+                        ],
+                        xs=12,
+                        xl=6,
+                    ),
+                    dbc.Col(
+                        children=[
+                            dbc.Card(
+                                className="my-3",
+                                style={'min-height': '350px', "box-sizing": "border-box", "box-shadow": "0px 1px 4px rgba(0, 0, 0, 0.2)", "border-radius": "6px"},
+                                children=[
+                                    dbc.CardBody(
+                                        children=[
+                                            html.H2(
+                                                    children=["25 a 59 años "],
+                                                    style={'color':"#BF9517", "font-size": "3rem"},
+                                                    className="mx-2 my-3"
+                                            ),
+                                            dcc.Graph(
+                                                figure=generate_donut_graph()
+                                            ),
+                                            html.P(
+                                                children=["son quienes más acceso tienen"],
+                                                style={"font-size": "24px"},
+                                                className="mt-3"
+                                            )
+                                        ],
+                                        className="text-center"
+                                    )
+                                ]
+                            ),
+                        ],
+                        xs=12,
+                        xl=6,
+                    ),
+                ]
+            ),
+            
+        ]
     ),
     
 

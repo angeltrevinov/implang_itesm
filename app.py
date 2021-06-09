@@ -21,7 +21,10 @@ from apps import home, itesm, callbacks
 # App Layout
 
 app.layout = html.Div([
-
+	html.Link(
+        rel='stylesheet',
+        href='/assets/style.css'
+    ),
 	dbc.NavbarSimple(
 		[
 
