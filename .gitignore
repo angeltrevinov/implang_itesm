@@ -1,5 +1,7 @@
 env/
 .idea/
 venv/
-/src_files
 .env
+apps/__pycache__/
+src_files/
+__pycache__/
