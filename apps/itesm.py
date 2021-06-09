@@ -29,7 +29,7 @@ df_denue.drop(labels=["Unnamed: 0"], inplace=True, axis=1)
 df_denue_av_join_join = df_denue_av_join.join(df_denue, on="denue_id", how="left")
 df_denue_av_data = df_denue_av_join_join[['av_union', 'denue_id', 'distancia','SHAPE_AREA', 'US_ACT2021', 'NOMBRE', 'CATEGORIA', 'codigo_act', 'nombre_act', 'latitud', 'longitud', 'ageb']].sort_values('av_union')
 
-### Create options for services by park
+# Create options for services by park
 selected_services_by_park = []
 for index, park in df_denue_av_data.drop_duplicates('NOMBRE').iterrows():
     label = park['NOMBRE']
