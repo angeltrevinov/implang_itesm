@@ -21,12 +21,20 @@ sector_k1_inegi = json.load(open("src_files/inegi_k1.geojson"))
 
 ## csv 
 df_inegi_av = pd.read_csv("src_files/inegi_av_98.csv") #union of green areas and inegi
+df_inegi_av_demo = pd.read_csv("src_files/inegi_av_98.csv") #union of green areas and inegi
 df_av_denue_rank = pd.read_csv("src_files/denue_ranking.csv") #union of green areas and denue with ranking
 
 ## helper file
 park_name_features = json.load(open("src_files/park_names_features.json"))
 
 ##prepare inegi data
+#calculate female and male data for 25 to 59 years
+for col in ['P_0A2_F', 'P_3A5_F','P_6A11_F', 'P_12A14_F', 'P_15A17_F', 'P_18A24_F',  'P_60YMAS_F','POBFEM']:
+    df_inegi_av_demo[col] = df_inegi_av_demo[col].fillna(0).replace("*", 0).astype(int)
+
+for col in ['P_0A2_M', 'P_3A5_M','P_6A11_M', 'P_12A14_M', 'P_15A17_M', 'P_18A24_M',  'P_60YMAS_M','POBMAS']:
+    df_inegi_av_demo[col] = df_inegi_av_demo[col].fillna(0).replace("*", 0).astype(int)
+
 df_inegi_av.rename(columns={"POBTOT": "población", "POBFEM": "mujeres", "POBMAS": "hombres", "VIVTOT": "viviendas"}, inplace=True)
 df_inegi_av.fillna(0, inplace=True)
 df_inegi_av.replace("*", 0, inplace=True)
@@ -57,7 +65,7 @@ def assign_callbacks(app):
             geojson=sector_k1_inegi, color=radio_filter,
             locations="inegi_cvegeo", 
             featureidkey="properties.CVEGEO", 
-            color_continuous_scale=["#CCC30E", "#D6B80F", "#BF9517", "#D6900F", "#CC730E"],
+            color_continuous_scale=['#590E0E', '#8C1616', '#CC730E', '#D6900F', '#FFC71F', '#FFE359', '#E4F279',  "#BDB655", "#9CA653", "#6C7339"],
             hover_data=["población","mujeres","hombres","area", "distancia", "viviendas", "densidad poblacional"],
         )
         
@@ -87,12 +95,14 @@ def assign_callbacks(app):
                 locations=df_av_denue_rank_filter['av_union'],
                 featureidkey="properties.UNION",
                 z=df_av_denue_rank_filter["ranking"],
-                colorscale=["#6C7339", "#6C7339",],
+                colorscale=["#63B350", "#63B350",],
+                marker_line_width=3,
+                marker_line_color="white",
                 showscale=False,
-                marker_line_width=0,
                 name= "<br>".join(selected_park.split(" ")),
-                hoverinfo="text",
-                hovertext= "ranking: " + df_av_denue_rank_filter['ranking'].astype(str) + "<br>" + "Área m²: " + df_av_denue_rank_filter['SHAPE_AREA'].astype(str)  + "<br>" + "densidad poblacional: " + df_av_denue_rank_filter['densidad poblacional'].astype(str) + "<br>" + "Tipología: " + df_av_denue_rank_filter['TIPOLOGIA']
+                text=selected_park,
+                hoverinfo="name+text",
+                hovertext= "puntuación: " + df_av_denue_rank_filter['ranking'].astype(str) + "<br>" + "Área m²: " + df_av_denue_rank_filter['SHAPE_AREA'].astype(str)  + "<br>" + "densidad poblacional: " + df_av_denue_rank_filter['densidad poblacional'].astype(str) + "<br>" + "Tipología: " + df_av_denue_rank_filter['TIPOLOGIA']
             )
         )
 
@@ -152,7 +162,7 @@ def assign_callbacks(app):
                 showscale=False
             ),
         )
-#hover_data=["POBTOT", "TIPOLOGIA", "cantidad de servicios", "VIVTOT", "densidad poblacional", "ranking"], 
+
         if radio_ranking_filter == "TIPOLOGIA":
             fig.add_trace(
                 go.Choropleth(
@@ -181,7 +191,7 @@ def assign_callbacks(app):
                     locations=df_av_denue_rank["av_union"],
                     featureidkey="properties.UNION",
                     z=df_av_denue_rank[radio_ranking_filter],
-                    colorscale=["#E4F279", "#CCC30E", "#D6B80F", "#BF9517", "#D6900F", "#CC730E"],
+                    colorscale=['#590E0E', '#8C1616', '#CC730E', '#D6900F', '#FFC71F', '#FFE359', '#E4F279',  "#BDB655", "#9CA653", "#6C7339"],
                     marker_line_color='white',
                     name=radio_ranking_filter,
                     hoverinfo="text",
@@ -192,5 +202,140 @@ def assign_callbacks(app):
         fig.update_geos(fitbounds="locations", visible=False)
 
         fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+        return fig
+
+    @app.callback(
+        Output('demographic_bar', 'figure'),
+        Input('select_service_by_park_demo', 'value')
+        
+    )
+    def generate_map_services(selected_park):
+        d_filter_name = df_inegi_av_demo[df_inegi_av['NOMBRE_PARQUE'] == selected_park]
+        d_filter_name = d_filter_name.groupby('NOMBRE_PARQUE').sum()
+
+        inegi_fem = d_filter_name[['P_0A2_F', 'P_3A5_F','P_6A11_F', 'P_12A14_F', 'P_15A17_F', 'P_18A24_F',  'P_60YMAS_F','POBFEM']]
+        inegi_fem['P_25A59_F'] = inegi_fem['POBFEM'] - (inegi_fem["P_0A2_F"] + inegi_fem["P_3A5_F"] + inegi_fem["P_6A11_F"] + inegi_fem["P_12A14_F"] + inegi_fem["P_15A17_F"] + inegi_fem["P_18A24_F"] + inegi_fem["P_60YMAS_F"])
+
+        inegi_Mas = d_filter_name[['P_0A2_M', 'P_3A5_M','P_6A11_M', 'P_12A14_M', 'P_15A17_M', 'P_18A24_M',  'P_60YMAS_M','POBMAS']]
+        inegi_Mas['P_25A59_M'] = inegi_Mas['POBMAS'] - (inegi_Mas["P_0A2_M"] + inegi_Mas["P_3A5_M"] + inegi_Mas["P_6A11_M"] + inegi_Mas["P_12A14_M"] + inegi_Mas["P_15A17_M"] + inegi_Mas["P_18A24_M"] + inegi_Mas["P_60YMAS_M"])
+
+        #prepare data
+        women_bins = np.array(list(inegi_fem[['P_0A2_F', 'P_3A5_F','P_6A11_F', 'P_12A14_F', 'P_15A17_F', 'P_18A24_F', 'P_25A59_F', 'P_60YMAS_F']].sum() * -1))
+        men_bins = np.array(list(inegi_Mas[['P_0A2_M', 'P_3A5_M','P_6A11_M', 'P_12A14_M', 'P_15A17_M', 'P_18A24_M', 'P_25A59_M', 'P_60YMAS_M']].sum()))
+        y = ['0 a 2 años', '3 a 5 años', '6 a 11 años', '12 a 14 años', '15 a 17 años', '18 a 24 años', '25 a 59 años', '60+ años']
+
+        layout = go.Layout(yaxis=go.layout.YAxis(title='Rangos de edades'),
+                    xaxis=go.layout.XAxis(
+                        title='Personas que viven a menos de 5 minutos de un área verde'),
+                    barmode='overlay',
+                    bargap=0.2,
+                    annotations=[
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[0] + men_bins[0], y='0 a 2 años',
+                                    hovertext=str(women_bins[0] + men_bins[0]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[1] + men_bins[1], y='3 a 5 años',
+                                    hovertext=str(women_bins[1] + men_bins[1]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[2] + men_bins[2], y='6 a 11 años',
+                                    hovertext=str(women_bins[2] + men_bins[2]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[3] + men_bins[3], y='12 a 14 años',
+                                    hovertext=str(women_bins[3] + men_bins[3]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[4] + men_bins[4], y='15 a 17 años',
+                                    hovertext=str(women_bins[4] + men_bins[4]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[5] + men_bins[5], y='18 a 24 años',
+                                    hovertext=str(women_bins[5] + men_bins[5]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[6] + men_bins[6], y='25 a 59 años',
+                                    hovertext=str(women_bins[6] + men_bins[6]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False),
+                                    dict(xref='x', yref='y',
+                                    x=women_bins[7] + men_bins[7], y='60+ años',
+                                    hovertext=str(women_bins[7] + men_bins[7]),
+                                    text="|",
+                                    font=dict(family='Arial', size=12,
+                                            color='white'),
+                                    showarrow=False)
+                                    ]
+                    )
+
+        data = [go.Bar(y=y,
+                x=men_bins,
+                orientation='h',
+                name='Hombres',
+                hoverinfo='x+name',
+                marker=dict(color='#1F67A6')
+                ),
+            go.Bar(y=y,
+                x=women_bins,
+                orientation='h',
+                name='Mujeres',
+                text=-1 * women_bins.astype('int'),
+                hoverinfo='text+name',
+                marker=dict(color='#8C1616')
+                )]
+                
+        fig = go.Figure(data=data, layout=layout)
+        fig.update_layout(margin=dict(t=0,b=0,l=0,r=0))
+
+        return fig
+
+    @app.callback(
+        Output('sunburst_services', 'figure'),
+        [Input('sunburst_services_top', 'value'),Input('sunburst_services_type', 'value')]
+    )
+    def generate_map_services(top, isTop):
+        top = int(top)
+        df1 = df_av_denue_rank
+        if isTop:
+            df2 = df1[df1["NOMBRE_PARQUE"].isin(df1.sort_values('cantidad de servicios', ascending=False)['NOMBRE_PARQUE'].unique()[:top])]
+        else:
+            size_parks = len(df1.sort_values('cantidad de servicios', ascending=False)['NOMBRE_PARQUE'].unique())
+            df2 = df1[df1["NOMBRE_PARQUE"].isin(df1.sort_values('cantidad de servicios', ascending=False)['NOMBRE_PARQUE'].unique()[(size_parks - top):])]
+        
+        fig = px.sunburst(
+            df2, 
+            path=['TIPOLOGIA','NOMBRE_PARQUE', 'nombre_act'], 
+            color=df2['NOMBRE_PARQUE'],
+            hover_name=df2['NOMBRE_PARQUE'],
+            hover_data={'NOMBRE_PARQUE':False},
+            custom_data=['cantidad de servicios'],
+            color_discrete_sequence=['#590E0E', '#8C1616', '#CC730E', '#D6900F', '#FFC71F', '#FFE359', '#E4F279',  "#BDB655", "#9CA653", "#6C7339"],
+            maxdepth=2
+            )
+
+        fig.update_layout(margin = dict(t=0, l=0, r=0, b=0), height=600)
+        fig.update_traces(insidetextorientation="auto", hovertemplate='%{label} <br> %{parent} <br> Servicios totales: %{value}')
 
         return fig
